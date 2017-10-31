@@ -117,7 +117,7 @@ class Experiment:
 
 if __name__ == '__main__':
 
-    exp = Experiment(datafiles[4])
+    exp = Experiment(datafiles[3])
 
     # exp.info()
 
