@@ -54,14 +54,14 @@ class Experiment:
         print self.data.head()
         print self.data.shape
 
-    def corr_plot(self):
+    def corr_plot(self, begin):
         """
         Cell Signal correlation
 
         :return:
         """
 
-        self.corr = self.data.corr()
+        self.corr = self.data.iloc[begin:begin+1200, :].corr()
         mask = np.zeros_like(self.corr, dtype=np.bool)
         mask[np.triu_indices_from(mask)] = True
 
@@ -93,35 +93,95 @@ class Experiment:
 
         :return:
         """
-        corr = self.data.corr()
+        fig = plt.figure(figsize=(15, 15))
+        for i, begin in enumerate([0, 1200, 2400, 3600]):
+            corr = self.data.iloc[begin:begin+1200, :].corr()
 
-        lpairs = []
-        for i in range(corr.shape[0]):
-            for j in range(i+1, corr.shape[0]):
-                if corr.iloc[i,j] >= thresh:
-                    lpairs.append((i,j))
+            ax = fig.add_subplot(2,2, i+1)
+            lpairs = []
+            for i in range(corr.shape[0]):
+                for j in range(i+1, corr.shape[0]):
+                    if corr.iloc[i,j] >= thresh:
+                        lpairs.append((i,j))
 
-        print lpairs
-        f, ax = plt.subplots(figsize=(11, 9))
-        plt.plot(self.coord['x'], self.coord['y'], 'r.')
+            # print lpairs
+            # f, ax = plt.subplots(figsize=(11, 9))
+            plt.plot(self.coord['x'], self.coord['y'], 'r.')
 
-        for p in lpairs:
-            print self.coord['x'].iloc[p[0]], self.coord['y'].iloc[p[0]], \
-                self.coord['x'].iloc[p[1]], self.coord['y'].iloc[p[1]]
-            plt.plot([self.coord['x'].iloc[p[0]], self.coord['x'].iloc[p[1]]],
-                     [self.coord['y'].iloc[p[0]], self.coord['y'].iloc[p[1]]], 'b-')
+            for p in lpairs:
+                # print self.coord['x'].iloc[p[0]], self.coord['y'].iloc[p[0]], \
+                #     self.coord['x'].iloc[p[1]], self.coord['y'].iloc[p[1]]
+                plt.plot([self.coord['x'].iloc[p[0]], self.coord['x'].iloc[p[1]]],
+                         [self.coord['y'].iloc[p[0]], self.coord['y'].iloc[p[1]]], 'b-')
 
         plt.show()
         plt.close()
 
+    def data_plot(self):
+        """
+        Plots Graphics of the data
+        :return:
+        """
+
+        for i in range(len(self.data.columns)):
+
+            self.data[self.data.columns[i]].plot()
+            plt.show()
+            plt.close()
+
+    def compute_fft(self, begin):
+        """
+        FFT of signals
+
+        :return:
+        """
+        self.data_fft = np.fft.rfft(self.data.iloc[begin:begin+1200,:], axis=0)
+
+        # for i in range(self.data_fft.shape[1]):
+        #     plt.plot(np.abs(self.data_fft[20:,i])**2)
+        #     plt.show()
+        #     plt.close()
+
+        self.data_fft[25:,:] = 0
+
+        inv = np.fft.irfft(self.data_fft, axis=0)
+
+        for i in range(inv.shape[1]):
+            fig = plt.figure(figsize=(15, 15))
+            ax = fig.add_subplot(311)
+            plt.plot(inv[:, i])
+            ax = fig.add_subplot(312)
+            plt.plot(self.data_fft[:, i])
+            ax = fig.add_subplot(313)
+            plt.plot(self.data.iloc[begin:begin+1200, i])
+            plt.show()
+            plt.close()
+
+
+        #  self.data_fft.columns = self.data.columns
+        #
+        # print self.data_fft.head()
+        # print self.data_fft.shape
+        #
+        # for i in range(len(self.data.columns)):
+        #
+        #     self.data_fft[self.data_fft.columns[i]].plot()
+        #     plt.show()
+        #     plt.close()
 
 if __name__ == '__main__':
 
-    exp = Experiment(datafiles[3])
+    for e in datafiles:
+        print e
+        exp = Experiment(e)
 
-    # exp.info()
+        # exp.info()
+        # exp.compute_fft(3600)
+
+        # exp.corr_plot(3600)
+        exp.connection_plot(0.6)
+
+        # exp.data_plot()
 
 
-    exp.corr_plot()
-    exp.connection_plot(0.6)
 
