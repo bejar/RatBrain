@@ -21,8 +21,8 @@ import numpy as np
 import seaborn as sn
 import matplotlib.pyplot as plt
 from RatBrain.Config.Constants import datafiles, datapath
-from scipy.signal import detrend
-from scipy.signal import savgol_filter
+from scipy.signal import detrend, argrelextrema, savgol_filter
+
 __author__ = 'bejar'
 
 
@@ -43,7 +43,7 @@ class Experiment:
         self.filename = filename
         self.data = pd.read_csv(datapath + self.filename + '.csv')
         ncol = self.data.shape[1]
-        self.data.columns = ['cell%d' % (i+1) for i in range(ncol)]
+        self.data.columns = ['cell%d' % (i + 1) for i in range(ncol)]
         self.coord = pd.read_csv(datapath + self.filename + 'C.csv')
 
     def info(self):
@@ -61,7 +61,7 @@ class Experiment:
         :return:
         """
 
-        self.corr = self.data.iloc[begin:begin+1200, :].corr()
+        self.corr = self.data.iloc[begin:begin + 1200, :].corr()
         mask = np.zeros_like(self.corr, dtype=np.bool)
         mask[np.triu_indices_from(mask)] = True
 
@@ -96,14 +96,14 @@ class Experiment:
         fig = plt.figure(figsize=(15, 15))
         for i, begin in enumerate([0, 1200, 2400, 3600]):
 
-            corr = self.data.iloc[begin:begin+1200, :].corr()
+            corr = self.data.iloc[begin:begin + 1200, :].corr()
 
-            ax = fig.add_subplot(2,2, i+1)
+            ax = fig.add_subplot(2, 2, i + 1)
             lpairs = []
             for i in range(corr.shape[0]):
-                for j in range(i+1, corr.shape[0]):
-                    if corr.iloc[i,j] >= thresh:
-                        lpairs.append((i,j))
+                for j in range(i + 1, corr.shape[0]):
+                    if corr.iloc[i, j] >= thresh:
+                        lpairs.append((i, j))
 
             # print lpairs
             # f, ax = plt.subplots(figsize=(11, 9))
@@ -125,31 +125,31 @@ class Experiment:
         :return:
         """
 
-        step = int(self.data.shape[0]/4.0)
+        step = int(self.data.shape[0] / 4.0)
         data = self.data.values.copy()
         for i in range(data.shape[1]):
-            data[:,i] = savgol_filter(data[:,i], 41, 3)
+            data[:, i] = savgol_filter(data[:, i], 41, 3)
         print data.shape
         for s in range(4):
 
-            dtrended = detrend(data[s*step:(s+1)*step, :], axis=0)
+            dtrended = detrend(data[s * step:(s + 1) * step, :], axis=0)
 
             # corr = self.data.iloc[s*step:(s+1)*step, :].corr()
             corr = np.corrcoef(dtrended, rowvar=False)
-            acorr = np.corrcoef(data[s*step:(s+1)*step, :], rowvar=False)
+            acorr = np.corrcoef(data[s * step:(s + 1) * step, :], rowvar=False)
 
             print corr.shape
             lpairs = []
             for i in range(corr.shape[0]):
-                for j in range(i+1, corr.shape[0]):
-                    if corr[i,j] >= thresh:
-                        lpairs.append((i,j))
+                for j in range(i + 1, corr.shape[0]):
+                    if corr[i, j] >= thresh:
+                        lpairs.append((i, j))
 
             alpairs = []
             for i in range(acorr.shape[0]):
-                for j in range(i+1, acorr.shape[0]):
-                    if acorr[i,j] >= thresh:
-                        alpairs.append((i,j))
+                for j in range(i + 1, acorr.shape[0]):
+                    if acorr[i, j] >= thresh:
+                        alpairs.append((i, j))
 
             fig = plt.figure(figsize=(15, 15))
             plt.title(self.filename + ' STEP= ' + str(s))
@@ -181,13 +181,13 @@ class Experiment:
                     fig = plt.figure(figsize=(15, 15))
                     plt.title(str(p[0]) + ' DT ' + str(p[1]))
 
-                    ax1 = fig.add_subplot(2,1,1)
-                    plt.plot(data[s*step:(s+1)*step,p[0]], 'r')
-                    plt.plot(data[s*step:(s+1)*step,p[1]], 'b')
+                    ax1 = fig.add_subplot(2, 1, 1)
+                    plt.plot(data[s * step:(s + 1) * step, p[0]], 'r')
+                    plt.plot(data[s * step:(s + 1) * step, p[1]], 'b')
 
-                    ax2 = fig.add_subplot(2,1,2, sharex=ax1)
-                    plt.plot(dtrended[:,p[0]], 'r')
-                    plt.plot(dtrended[:,p[1]], 'b')
+                    ax2 = fig.add_subplot(2, 1, 2, sharex=ax1)
+                    plt.plot(dtrended[:, p[0]], 'r')
+                    plt.plot(dtrended[:, p[1]], 'b')
                     plt.show()
                     plt.close()
 
@@ -195,39 +195,37 @@ class Experiment:
                 if p not in lpairs:
                     fig = plt.figure(figsize=(15, 15))
                     plt.title(str(p[0]) + ' NDT ' + str(p[1]))
-                    ax1 = fig.add_subplot(2,1,1)
+                    ax1 = fig.add_subplot(2, 1, 1)
 
-                    plt.plot(data[s*step:(s+1)*step,p[0]], 'r')
-                    plt.plot(data[s*step:(s+1)*step,p[1]], 'b')
+                    plt.plot(data[s * step:(s + 1) * step, p[0]], 'r')
+                    plt.plot(data[s * step:(s + 1) * step, p[1]], 'b')
 
-                    ax2 = fig.add_subplot(2,1,2, sharex=ax1)
-                    plt.plot(dtrended[:,p[0]], 'r')
-                    plt.plot(dtrended[:,p[1]], 'b')
+                    ax2 = fig.add_subplot(2, 1, 2, sharex=ax1)
+                    plt.plot(dtrended[:, p[0]], 'r')
+                    plt.plot(dtrended[:, p[1]], 'b')
 
                     plt.show()
                     plt.close()
 
-            # for p in lpairs:
-            #     fig = plt.figure(figsize=(15, 15))
-            #     plt.title(str(p[0]) + ' ' + str(p[1]))
-            #     plt.plot(data[s*step:(s+1)*step,p[0]], 'b')
-            #     plt.plot(data[s*step:(s+1)*step,p[1]], 'k')
-            #     plt.plot(dtrended[:,p[0]], 'r')
-            #     plt.plot(dtrended[:,p[1]], 'g')
-            #     plt.show()
-            #     plt.close()
-            #
-            # for p in alpairs:
-            #     fig = plt.figure(figsize=(15, 15))
-            #     plt.title(str(p[0]) + ' ' + str(p[1]))
-            #     plt.plot(data[s*step:(s+1)*step,p[0]], 'b')
-            #     plt.plot(data[s*step:(s+1)*step,p[1]], 'k')
-            #     plt.plot(dtrended[:,p[0]], 'r')
-            #     plt.plot(dtrended[:,p[1]], 'g')
-            #     plt.show()
-            #     plt.close()
-
-
+                    # for p in lpairs:
+                    #     fig = plt.figure(figsize=(15, 15))
+                    #     plt.title(str(p[0]) + ' ' + str(p[1]))
+                    #     plt.plot(data[s*step:(s+1)*step,p[0]], 'b')
+                    #     plt.plot(data[s*step:(s+1)*step,p[1]], 'k')
+                    #     plt.plot(dtrended[:,p[0]], 'r')
+                    #     plt.plot(dtrended[:,p[1]], 'g')
+                    #     plt.show()
+                    #     plt.close()
+                    #
+                    # for p in alpairs:
+                    #     fig = plt.figure(figsize=(15, 15))
+                    #     plt.title(str(p[0]) + ' ' + str(p[1]))
+                    #     plt.plot(data[s*step:(s+1)*step,p[0]], 'b')
+                    #     plt.plot(data[s*step:(s+1)*step,p[1]], 'k')
+                    #     plt.plot(dtrended[:,p[0]], 'r')
+                    #     plt.plot(dtrended[:,p[1]], 'g')
+                    #     plt.show()
+                    #     plt.close()
 
     def data_plot(self):
         """
@@ -236,13 +234,12 @@ class Experiment:
         """
 
         for i in range(len(self.data.columns)):
-
             self.data[self.data.columns[i]].plot()
             data = self.data[self.data.columns[i]].values
 
-            dataf = savgol_filter(data, 61, 3)
-            plt.plot(dataf)
-            dataf = savgol_filter(data, 101, 3)
+            # dataf = savgol_filter(data, 61, 2)
+            # plt.plot(dataf)
+            dataf = savgol_filter(data, 91, 3)
             plt.plot(dataf)
             plt.show()
             plt.close()
@@ -253,14 +250,14 @@ class Experiment:
 
         :return:
         """
-        self.data_fft = np.fft.rfft(self.data.iloc[begin:begin+1200,:], axis=0)
+        self.data_fft = np.fft.rfft(self.data.iloc[begin:begin + 1200, :], axis=0)
 
         # for i in range(self.data_fft.shape[1]):
         #     plt.plot(np.abs(self.data_fft[20:,i])**2)
         #     plt.show()
         #     plt.close()
 
-        self.data_fft[25:,:] = 0
+        self.data_fft[25:, :] = 0
 
         inv = np.fft.irfft(self.data_fft, axis=0)
 
@@ -271,39 +268,118 @@ class Experiment:
             ax = fig.add_subplot(312)
             plt.plot(self.data_fft[:, i])
             ax = fig.add_subplot(313)
-            plt.plot(self.data.iloc[begin:begin+1200, i])
+            plt.plot(self.data.iloc[begin:begin + 1200, i])
             plt.show()
             plt.close()
 
 
-        #  self.data_fft.columns = self.data.columns
-        #
-        # print self.data_fft.head()
-        # print self.data_fft.shape
-        #
-        # for i in range(len(self.data.columns)):
-        #
-        #     self.data_fft[self.data_fft.columns[i]].plot()
-        #     plt.show()
-        #     plt.close()
+            #  self.data_fft.columns = self.data.columns
+            #
+            # print self.data_fft.head()
+            # print self.data_fft.shape
+            #
+            # for i in range(len(self.data.columns)):
+            #
+            #     self.data_fft[self.data_fft.columns[i]].plot()
+            #     plt.show()
+            #     plt.close()
+
+
+    def peaks_positions(self, data, sgf, k=1):
+        """
+        Computes peaks positions
+
+        :param data:
+        :param k:
+        :return:
+        """
+        dataf = detrend(savgol_filter(data, sgf[0], sgf[1]), axis=0)
+
+        step = int(self.data.shape[0] / 4.0)
+        for s in range(4):
+            dataf[s * step:(s + 1) * step] = detrend(dataf[s * step:(s + 1) * step], axis=0)
+
+        ext = argrelextrema(dataf, np.greater, order=30)[0]
+        stat = sorted(dataf)[:int(len(dataf)*0.95)]
+        dstd = np.std(dataf)
+        dmn = np.mean(stat)
+        lpos = []
+        for p in ext:
+            if dataf[p]>dmn+(k*dstd):
+                mposl = np.min(dataf[max(0,p-50):p])
+                mposr = np.min(dataf[p:min(p+50,dataf.shape[0])])
+                if (np.abs(mposl - dataf[p]) > 0.5) or (np.abs(mposr - dataf[p]) > 0.5):
+                # if np.abs(mposr - dataf[p]) > 0.5:
+                    lpos.append(p)
+
+        close = []
+        for i in range(len(lpos)-1):
+            if (lpos[i+1] - lpos[i]) < 100:
+                print dataf[lpos[i]] , dataf[lpos[i+1]], lpos[i+1], lpos[i], lpos[i+1] - lpos[i]
+                if dataf[lpos[i]] > dataf[lpos[i+1]]:
+                    close.append(i+1)
+                else:
+                    close.append(i)
+
+        return [p for i, p in enumerate(lpos) if i not in close], ext
+
+
+    def find_peaks(self, sgf, k, plot=False):
+        """
+        Identifies the peaks in the signal
+
+        :return:
+        """
+
+        lpeaks = []
+        for i in range(len(self.data.columns)):
+            data = self.data[self.data.columns[i]].values
+
+            lpos, ext = self.peaks_positions(data, sgf, k)
+            lpeaks.append(lpos)
+
+            if plot:
+                dataf = savgol_filter(data, sgf[0], sgf[1])
+                step = int(self.data.shape[0] / 4.0)
+                for s in range(4):
+                    dataf[s * step:(s + 1) * step] = detrend(dataf[s * step:(s + 1) * step], axis=0)
+                plt.plot(dataf)
+                up = np.max(data)
+                down = np.min(data)
+                middle = (np.min(data) + np.max(data)) / 2
+                for e in lpos:
+                    plt.plot([e,e], [up, middle], 'g--')
+                for e in ext:
+                    plt.plot([e,e], [down, 0], 'r--')
+                plt.show()
+                plt.close()
+
+        for i, lp in enumerate(lpeaks):
+            print lp
+            plt.plot(lp, [i]*len(lp), '.')
+        plt.show()
+        plt.close()
+
 
 if __name__ == '__main__':
 
+    # for e in datafiles:
+    #     print e
+    #     exp = Experiment(e)
+    #
+    #     # exp.info()
+    #     # exp.compute_fft(3600)
+    #
+    #     #  exp.corr_plot(0)
+    #     #  exp.corr_plot(1200)
+    #     #  exp.corr_plot(2400)
+    #     #  exp.corr_plot(3600)
+    #     #  exp.connection_plot(0.6)
+    #     # exp.connection_plot_pairs(0.6)
+    #
+    #     # exp.data_plot()
+    #     exp.find_peaks()
+
     for e in datafiles:
-        print e
         exp = Experiment(e)
-
-        # exp.info()
-        # exp.compute_fft(3600)
-
-       #  exp.corr_plot(0)
-       #  exp.corr_plot(1200)
-       #  exp.corr_plot(2400)
-       #  exp.corr_plot(3600)
-       #  exp.connection_plot(0.6)
-        exp.connection_plot_pairs(0.6)
-
-        # exp.data_plot()
-
-
-
+        exp.find_peaks(sgf=(61,3), k=1.75)
