@@ -285,7 +285,7 @@ class Experiment:
             #     plt.close()
 
 
-    def peaks_positions(self, data, sgf, k=1):
+    def peaks_positions(self, data, sgf, k=1, dtr=False):
         """
         Computes peaks positions
 
@@ -295,9 +295,10 @@ class Experiment:
         """
         dataf = detrend(savgol_filter(data, sgf[0], sgf[1]), axis=0)
 
-        step = int(self.data.shape[0] / 4.0)
-        for s in range(4):
-            dataf[s * step:(s + 1) * step] = detrend(dataf[s * step:(s + 1) * step], axis=0)
+        if dtr:
+            step = int(self.data.shape[0] / 4.0)
+            for s in range(4):
+                dataf[s * step:(s + 1) * step] = detrend(dataf[s * step:(s + 1) * step], axis=0)
 
         ext = argrelextrema(dataf, np.greater, order=30)[0]
         stat = sorted(dataf)[:int(len(dataf)*0.95)]
@@ -315,7 +316,7 @@ class Experiment:
         close = []
         for i in range(len(lpos)-1):
             if (lpos[i+1] - lpos[i]) < 100:
-                print dataf[lpos[i]] , dataf[lpos[i+1]], lpos[i+1], lpos[i], lpos[i+1] - lpos[i]
+                # print dataf[lpos[i]] , dataf[lpos[i+1]], lpos[i+1], lpos[i], lpos[i+1] - lpos[i]
                 if dataf[lpos[i]] > dataf[lpos[i+1]]:
                     close.append(i+1)
                 else:
@@ -324,7 +325,7 @@ class Experiment:
         return [p for i, p in enumerate(lpos) if i not in close], ext
 
 
-    def find_peaks(self, sgf, k, plot=False):
+    def find_peaks(self, sgf, k, plot=False, dtr=False):
         """
         Identifies the peaks in the signal
 
@@ -335,14 +336,15 @@ class Experiment:
         for i in range(len(self.data.columns)):
             data = self.data[self.data.columns[i]].values
 
-            lpos, ext = self.peaks_positions(data, sgf, k)
+            lpos, ext = self.peaks_positions(data, sgf, k, dtr=detrend)
             lpeaks.append(lpos)
 
             if plot:
                 dataf = savgol_filter(data, sgf[0], sgf[1])
-                step = int(self.data.shape[0] / 4.0)
-                for s in range(4):
-                    dataf[s * step:(s + 1) * step] = detrend(dataf[s * step:(s + 1) * step], axis=0)
+                if dtr:
+                    step = int(self.data.shape[0] / 4.0)
+                    for s in range(4):
+                        dataf[s * step:(s + 1) * step] = detrend(dataf[s * step:(s + 1) * step], axis=0)
                 plt.plot(dataf)
                 up = np.max(data)
                 down = np.min(data)
@@ -355,7 +357,6 @@ class Experiment:
                 plt.close()
 
         for i, lp in enumerate(lpeaks):
-            print lp
             plt.plot(lp, [i]*len(lp), '.')
         plt.show()
         plt.close()
@@ -381,5 +382,6 @@ if __name__ == '__main__':
     #     exp.find_peaks()
 
     for e in datafiles:
+        print e
         exp = Experiment(e)
-        exp.find_peaks(sgf=(61,3), k=1.75)
+        exp.find_peaks(sgf=(61,3), k=1.75, dtr=False)
